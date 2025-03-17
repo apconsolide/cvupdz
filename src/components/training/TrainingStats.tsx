@@ -2,6 +2,8 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Award, Clock, Calendar, BookOpen } from "lucide-react";
+import { useCourses } from "@/hooks/useCourses";
+import { useUserProgress } from "@/hooks/useUserProgress";
 
 interface TrainingStatsProps {
   totalCourses?: number;
@@ -13,13 +15,59 @@ interface TrainingStatsProps {
 }
 
 const TrainingStats = ({
-  totalCourses = 5,
-  completedCourses = 2,
-  totalHoursLearned = 24,
-  certificatesEarned = 2,
-  lastActivity = "2023-06-10T14:30:00Z",
+  totalCourses,
+  completedCourses,
+  totalHoursLearned,
+  certificatesEarned,
+  lastActivity,
   className,
 }: TrainingStatsProps) => {
+  const { enrollments, certificates, loading } = useCourses();
+  const { progress } = useUserProgress();
+
+  // Calculate stats from real data
+  const calculatedTotalCourses = enrollments.length || 0;
+  const calculatedCompletedCourses =
+    enrollments.filter((e) => e.progress === 100).length || 0;
+  const calculatedCertificatesEarned = certificates.length || 0;
+
+  // Calculate total hours learned (estimate based on courses)
+  const calculatedTotalHoursLearned = enrollments.reduce((total, course) => {
+    // Assume each course is about 10 hours, and multiply by progress percentage
+    return total + 10 * (course.progress / 100);
+  }, 0);
+
+  // Get the most recent activity timestamp
+  const activityDates = [
+    ...enrollments.map((e) => e.lastAccessedAt),
+    ...progress.map((p) => p.lastActivity),
+  ].filter(Boolean);
+
+  const calculatedLastActivity =
+    activityDates.length > 0
+      ? new Date(
+          Math.max(
+            ...activityDates.map((date) => new Date(date || 0).getTime()),
+          ),
+        ).toISOString()
+      : new Date().toISOString();
+
+  // Use calculated values or fallback to props
+  const displayTotalCourses = loading
+    ? totalCourses || 0
+    : calculatedTotalCourses;
+  const displayCompletedCourses = loading
+    ? completedCourses || 0
+    : calculatedCompletedCourses;
+  const displayTotalHoursLearned = loading
+    ? totalHoursLearned || 0
+    : Math.round(calculatedTotalHoursLearned);
+  const displayCertificatesEarned = loading
+    ? certificatesEarned || 0
+    : calculatedCertificatesEarned;
+  const displayLastActivity = loading
+    ? lastActivity || new Date().toISOString()
+    : calculatedLastActivity;
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -30,7 +78,9 @@ const TrainingStats = ({
   };
 
   const completionPercentage =
-    totalCourses > 0 ? Math.round((completedCourses / totalCourses) * 100) : 0;
+    displayTotalCourses > 0
+      ? Math.round((displayCompletedCourses / displayTotalCourses) * 100)
+      : 0;
 
   return (
     <Card
@@ -50,7 +100,7 @@ const TrainingStats = ({
                 {completionPercentage}%
               </p>
               <p className="text-sm text-gray-400">
-                {completedCourses}/{totalCourses} Courses
+                {displayCompletedCourses}/{displayTotalCourses} Courses
               </p>
             </div>
             <Progress value={completionPercentage} className="h-1" />
@@ -63,7 +113,9 @@ const TrainingStats = ({
               </h3>
               <Clock className="h-5 w-5 text-cvup-gold" />
             </div>
-            <p className="text-2xl font-bold text-white">{totalHoursLearned}</p>
+            <p className="text-2xl font-bold text-white">
+              {displayTotalHoursLearned}
+            </p>
             <p className="text-sm text-gray-400">Total Hours</p>
           </div>
 
@@ -75,7 +127,7 @@ const TrainingStats = ({
               <Award className="h-5 w-5 text-cvup-gold" />
             </div>
             <p className="text-2xl font-bold text-white">
-              {certificatesEarned}
+              {displayCertificatesEarned}
             </p>
             <p className="text-sm text-gray-400">Earned</p>
           </div>
@@ -88,7 +140,7 @@ const TrainingStats = ({
               <Calendar className="h-5 w-5 text-cvup-gold" />
             </div>
             <p className="text-xl font-bold text-white">
-              {formatDate(lastActivity)}
+              {formatDate(displayLastActivity)}
             </p>
             <p className="text-sm text-gray-400">Recent Learning</p>
           </div>

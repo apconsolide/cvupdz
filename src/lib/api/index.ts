@@ -7,3 +7,4 @@ export * from "./linkedin";
 export * from "./training";
 export * from "./courses";
 export * from "./admin";
+export * from "./zoom";

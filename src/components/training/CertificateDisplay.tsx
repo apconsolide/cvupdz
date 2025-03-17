@@ -21,7 +21,7 @@ const CertificateDisplay = ({
   id,
   courseId,
   courseTitle = "Advanced Excel for Professionals",
-  userName = "Ahmed Benali",
+  userName,
   issueDate = "2023-06-15",
   certificateUrl,
   onBack,

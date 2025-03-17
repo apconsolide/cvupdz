@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, Users, ArrowRight } from "lucide-react";
+import { useTraining } from "@/hooks/useTraining";
 
 interface UpcomingTraining {
   id: string;
@@ -25,34 +26,8 @@ interface UpcomingTrainingsProps {
 }
 
 const UpcomingTrainings = ({
-  trainings = [
-    {
-      id: "1",
-      title: "Advanced Excel for Professionals",
-      date: "June 15, 2023",
-      time: "10:00 AM - 2:00 PM",
-      location: "Online (Zoom)",
-      instructor: "Ahmed Kaddour",
-      capacity: 25,
-      enrolled: 18,
-      type: "excel",
-      description:
-        "Master advanced Excel functions, pivot tables, and data analysis techniques for professional use.",
-    },
-    {
-      id: "2",
-      title: "Communication Skills Workshop",
-      date: "June 18, 2023",
-      time: "1:00 PM - 4:00 PM",
-      location: "CV UP Training Center, Algiers",
-      instructor: "Leila Benali",
-      capacity: 20,
-      enrolled: 15,
-      type: "soft-skills",
-      description:
-        "Develop effective communication skills for professional environments and team collaboration.",
-    },
-  ],
+  trainings = [],
+
   onViewAll,
   onEnroll,
   className,
@@ -92,6 +67,71 @@ const UpcomingTrainings = ({
     }
   };
 
+  const { sessions, loading: sessionsLoading } = useTraining();
+  const [formattedSessions, setFormattedSessions] = useState<
+    UpcomingTraining[]
+  >([]);
+
+  useEffect(() => {
+    if (sessionsLoading) return;
+
+    // Format sessions into the expected structure
+    const formatted = sessions
+      .filter((session) => {
+        // Only show future sessions
+        const sessionDate = new Date(`${session.date}T${session.startTime}`);
+        return sessionDate > new Date();
+      })
+      .map((session) => ({
+        id: session.id,
+        title: session.title,
+        date: new Date(session.date).toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        }),
+        time: `${formatTime(session.startTime)} - ${formatTime(session.endTime)}`,
+        location: session.location || "Online (Zoom)",
+        instructor: session.instructorName || "CV UP Instructor",
+        capacity: session.maxParticipants || 20,
+        enrolled: session.enrolled || 0,
+        type: determineSessionType(session.title),
+        description:
+          session.description ||
+          "Join this training session to enhance your professional skills.",
+      }));
+
+    setFormattedSessions(formatted);
+  }, [sessions, sessionsLoading]);
+
+  // Helper function to determine session type based on title
+  const determineSessionType = (title: string): string => {
+    const lowerTitle = title.toLowerCase();
+    if (lowerTitle.includes("excel")) return "excel";
+    if (lowerTitle.includes("communication") || lowerTitle.includes("soft"))
+      return "soft-skills";
+    if (lowerTitle.includes("french")) return "french";
+    if (lowerTitle.includes("english")) return "english";
+    return "training";
+  };
+
+  // Helper function to format time
+  const formatTime = (timeStr: string): string => {
+    try {
+      const date = new Date(`2000-01-01T${timeStr}`);
+      return date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } catch (e) {
+      return timeStr;
+    }
+  };
+
+  const displayTrainings =
+    formattedSessions.length > 0 ? formattedSessions : trainings;
+
   return (
     <Card
       className={`w-full bg-cvup-blue text-white border-none shadow-lg ${className}`}
@@ -125,7 +165,7 @@ const UpcomingTrainings = ({
           </div>
         ) : (
           <div className="space-y-4">
-            {trainings.map((training) => (
+            {displayTrainings.map((training) => (
               <div
                 key={training.id}
                 className="p-4 rounded-lg bg-cvup-lightblue hover:bg-[#2A3042] transition-colors"

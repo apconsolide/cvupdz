@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Sidebar from "@/components/layout/Sidebar";
 import TrainingDashboard from "@/components/training/TrainingDashboard";
@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button";
 import { BookOpen } from "lucide-react";
 
 const Training = () => {
+  const [activeTab, setActiveTab] = useState("progress");
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+  };
+
   return (
     <div className="min-h-screen bg-[#121620] text-white">
       <Navbar />
@@ -20,13 +26,19 @@ const Training = () => {
                   Access training sessions and skill development resources
                 </p>
               </div>
-              <Button className="bg-[#ffbd59] hover:bg-[#e6a94f] text-black font-medium">
+              <Button
+                className="bg-[#ffbd59] hover:bg-[#e6a94f] text-black font-medium"
+                onClick={() => handleTabChange("courses")}
+              >
                 <BookOpen className="mr-2 h-4 w-4" />
                 Browse All Courses
               </Button>
             </div>
 
-            <TrainingDashboard />
+            <TrainingDashboard
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+            />
           </div>
         </main>
       </div>

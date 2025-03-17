@@ -13,6 +13,7 @@ import {
   Palette,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 interface AdminSidebarProps {
   className?: string;
@@ -42,6 +43,7 @@ const NavItem = ({ icon, label, href, active = false }: NavItemProps) => {
 };
 
 const AdminSidebar = ({ className = "" }: AdminSidebarProps) => {
+  const { supabase } = useAuth();
   return (
     <aside
       className={cn(
@@ -129,7 +131,13 @@ const AdminSidebar = ({ className = "" }: AdminSidebarProps) => {
       </div>
 
       <div className="p-4 border-t border-gray-800">
-        <button className="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-gray-300 hover:bg-cvup-lightblue hover:text-cvup-gold transition-colors">
+        <button
+          onClick={() => {
+            supabase.auth.signOut();
+            window.location.href = "/login";
+          }}
+          className="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-gray-300 hover:bg-cvup-lightblue hover:text-cvup-gold transition-colors"
+        >
           <LogOut className="w-5 h-5" />
           <span className="font-medium">Logout</span>
         </button>

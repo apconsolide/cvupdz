@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Clock, Award, ArrowRight } from "lucide-react";
+import { useCourses } from "@/hooks/useCourses";
 
 interface CourseProgressItem {
   id: string;
@@ -22,35 +23,8 @@ interface TrainingProgressProps {
 }
 
 const TrainingProgress = ({
-  courses = [
-    {
-      id: "1",
-      courseId: "c1",
-      courseTitle: "Advanced Excel for Professionals",
-      progress: 75,
-      lastActivity: "2023-06-10T14:30:00Z",
-      totalModules: 8,
-      completedModules: 6,
-    },
-    {
-      id: "2",
-      courseId: "c2",
-      courseTitle: "Communication Skills Workshop",
-      progress: 40,
-      lastActivity: "2023-06-08T09:15:00Z",
-      totalModules: 5,
-      completedModules: 2,
-    },
-    {
-      id: "3",
-      courseId: "c3",
-      courseTitle: "Business French for Beginners",
-      progress: 100,
-      lastActivity: "2023-06-01T16:45:00Z",
-      totalModules: 10,
-      completedModules: 10,
-    },
-  ],
+  courses = [],
+
   onViewCourse,
   className,
 }: TrainingProgressProps) => {
@@ -74,6 +48,33 @@ const TrainingProgress = ({
       minute: "2-digit",
     });
   };
+
+  const { enrollments, loading: enrollmentsLoading } = useCourses();
+  const [formattedCourses, setFormattedCourses] = useState<
+    CourseProgressItem[]
+  >([]);
+
+  useEffect(() => {
+    if (enrollmentsLoading) return;
+
+    // Format enrollments into the expected structure
+    const formatted = enrollments.map((enrollment) => ({
+      id: enrollment.id,
+      courseId: enrollment.courseId,
+      courseTitle: enrollment.courseTitle || "Untitled Course",
+      progress: enrollment.progress,
+      lastActivity: enrollment.lastAccessedAt,
+      totalModules: enrollment.totalModules || 0,
+      completedModules: Math.round(
+        (enrollment.progress / 100) * (enrollment.totalModules || 10),
+      ),
+    }));
+
+    setFormattedCourses(formatted);
+  }, [enrollments, enrollmentsLoading]);
+
+  const displayCourses =
+    formattedCourses.length > 0 ? formattedCourses : courses;
 
   return (
     <Card
@@ -101,7 +102,7 @@ const TrainingProgress = ({
             </div>
           ) : (
             <div className="space-y-4">
-              {courses.map((course) => (
+              {displayCourses.map((course) => (
                 <div
                   key={course.id}
                   className="p-4 rounded-lg bg-cvup-lightblue hover:bg-[#2A3042] transition-colors"

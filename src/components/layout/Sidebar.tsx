@@ -12,6 +12,7 @@ import {
   Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 interface SidebarProps {
   className?: string;
@@ -43,6 +44,7 @@ const NavItem = ({ icon, label, href, active = false }: NavItemProps) => {
 const Sidebar = ({ className = "" }: SidebarProps) => {
   // Get current path to determine active link
   const currentPath = window.location.pathname;
+  const { supabase } = useAuth();
 
   return (
     <aside
@@ -142,7 +144,13 @@ const Sidebar = ({ className = "" }: SidebarProps) => {
       </div>
 
       <div className="p-4 border-t border-gray-800">
-        <button className="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-gray-300 hover:bg-cvup-lightblue hover:text-cvup-gold transition-colors">
+        <button
+          onClick={() => {
+            supabase.auth.signOut();
+            window.location.href = "/login";
+          }}
+          className="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-gray-300 hover:bg-cvup-lightblue hover:text-cvup-gold transition-colors"
+        >
           <LogOut className="w-5 h-5" />
           <span className="font-medium">Logout</span>
         </button>

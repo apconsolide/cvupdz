@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Calendar, Award, Video } from "lucide-react";
@@ -11,11 +11,32 @@ import RecordingsList from "./RecordingsList";
 
 interface TrainingDashboardProps {
   className?: string;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
-const TrainingDashboard = ({ className }: TrainingDashboardProps) => {
-  const [activeTab, setActiveTab] = useState("progress");
+const TrainingDashboard = ({
+  className,
+  activeTab: propActiveTab,
+  onTabChange,
+}: TrainingDashboardProps) => {
+  const [activeTab, setActiveTab] = useState(propActiveTab || "progress");
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+
+  // Update local state when prop changes
+  useEffect(() => {
+    if (propActiveTab && propActiveTab !== activeTab) {
+      setActiveTab(propActiveTab);
+    }
+  }, [propActiveTab]);
+
+  // Notify parent component when tab changes
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    if (onTabChange) {
+      onTabChange(tab);
+    }
+  };
 
   const handleCourseSelect = (courseId: string) => {
     setSelectedCourseId(courseId);
@@ -34,7 +55,7 @@ const TrainingDashboard = ({ className }: TrainingDashboardProps) => {
       <Tabs
         defaultValue="progress"
         value={activeTab}
-        onValueChange={setActiveTab}
+        onValueChange={handleTabChange}
       >
         <TabsList className="bg-cvup-blue border-b border-gray-800 p-0 h-auto w-full justify-start">
           <TabsTrigger
