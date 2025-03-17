@@ -18,10 +18,20 @@ interface NavbarProps {
   userAvatar?: string;
 }
 
-const Navbar = ({
-  userName = "Ahmed Benali",
-  userAvatar = "",
-}: NavbarProps) => {
+import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/context/AuthContext";
+
+const Navbar = ({ userName, userAvatar }: NavbarProps) => {
+  const { profile } = useProfile();
+  const { user } = useAuth();
+
+  // Use profile data if available, otherwise fallback to props or defaults
+  const displayName =
+    profile?.full_name || userName || user?.email?.split("@")[0] || "User";
+  const avatarUrl =
+    userAvatar ||
+    profile?.avatar_url ||
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`;
   return (
     <nav className="w-full h-[70px] bg-cvup-blue border-b border-gray-700 flex items-center justify-between px-6 sticky top-0 z-50">
       <div className="flex items-center">
@@ -89,15 +99,15 @@ const Navbar = ({
               className="flex items-center space-x-2 text-white hover:bg-gray-800"
             >
               <Avatar className="h-8 w-8 border-2 border-cvup-gold">
-                <AvatarImage src={userAvatar} alt={userName} />
+                <AvatarImage src={avatarUrl} alt={displayName} />
                 <AvatarFallback className="bg-cvup-lightblue text-cvup-gold">
-                  {userName
+                  {displayName
                     .split(" ")
                     .map((name) => name[0])
                     .join("")}
                 </AvatarFallback>
               </Avatar>
-              <span className="hidden md:inline-block">{userName}</span>
+              <span className="hidden md:inline-block">{displayName}</span>
               <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>

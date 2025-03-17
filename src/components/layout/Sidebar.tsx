@@ -44,7 +44,7 @@ const NavItem = ({ icon, label, href, active = false }: NavItemProps) => {
 const Sidebar = ({ className = "" }: SidebarProps) => {
   // Get current path to determine active link
   const currentPath = window.location.pathname;
-  const { supabase } = useAuth();
+  const { supabase, permissions } = useAuth();
 
   return (
     <aside
@@ -107,12 +107,14 @@ const Sidebar = ({ className = "" }: SidebarProps) => {
               href="/training"
               active={currentPath === "/training"}
             />
-            <NavItem
-              icon={<Video />}
-              label="Session Management"
-              href="/session-management"
-              active={currentPath === "/session-management"}
-            />
+            {permissions.canManageTrainingSessions && (
+              <NavItem
+                icon={<Video />}
+                label="Session Management"
+                href="/session-management"
+                active={currentPath === "/session-management"}
+              />
+            )}
             <NavItem
               icon={<Download />}
               label="Chrome Extension"

@@ -1,12 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Sidebar from "@/components/layout/Sidebar";
 import TrainingDashboard from "@/components/training/TrainingDashboard";
 import { Button } from "@/components/ui/button";
 import { BookOpen } from "lucide-react";
+import { useCourses } from "@/hooks/useCourses";
 
 const Training = () => {
   const [activeTab, setActiveTab] = useState("progress");
+  const { loadCourses } = useCourses();
+
+  // Load courses when component mounts
+  useEffect(() => {
+    loadCourses();
+  }, [loadCourses]);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);

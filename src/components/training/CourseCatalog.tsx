@@ -37,6 +37,11 @@ const CourseCatalog = ({ className, onCourseSelect }: CourseCatalogProps) => {
     new Set(courses.map((course) => course.level).filter(Boolean)),
   );
 
+  // Load courses when component mounts
+  useEffect(() => {
+    loadCourses();
+  }, [loadCourses]);
+
   // Apply filters when courses or filter values change
   useEffect(() => {
     let result = [...courses];
