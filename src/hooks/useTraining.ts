@@ -9,7 +9,7 @@ import {
   cancelSessionRegistration
 } from '@/lib/api/training';
 
-export const useTraining = () => {
+function useTrainingHook() {
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,4 +87,13 @@ export const useTraining = () => {
     register,
     cancelRegistration
   };
-};
+}
+
+// Method 1: Named export
+export const useTraining = useTrainingHook;
+
+// Method 2: Default export
+// export default useTrainingHook;
+
+// Method 3: Direct export of the function
+// export function useTraining() { ... } - This was your original approach
