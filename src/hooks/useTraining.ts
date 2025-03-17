@@ -9,7 +9,7 @@ import {
   cancelSessionRegistration
 } from '@/lib/api/training';
 
-export function useTraining() {
+export const useTraining = () => {
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,4 +87,4 @@ export function useTraining() {
     register,
     cancelRegistration
   };
-}
+};
