@@ -1,13 +1,12 @@
 import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
+import { UserPermissions } from "@/types/auth";
 import { useAuth } from "@/context/AuthContext";
 
 interface RoleBasedRouteProps {
   requiredPermission: keyof UserPermissions;
   redirectTo?: string;
 }
-
-import { UserPermissions } from "@/types/auth";
 
 const RoleBasedRoute = ({
   requiredPermission,
