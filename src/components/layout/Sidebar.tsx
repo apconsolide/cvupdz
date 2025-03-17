@@ -10,6 +10,7 @@ import {
   HelpCircle,
   LogOut,
   Download,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -23,9 +24,12 @@ interface NavItemProps {
   label: string;
   href: string;
   active?: boolean;
+  hidden?: boolean;
 }
 
-const NavItem = ({ icon, label, href, active = false }: NavItemProps) => {
+const NavItem = ({ icon, label, href, active = false, hidden = false }: NavItemProps) => {
+  if (hidden) return null;
+  
   return (
     <Link
       to={href}
@@ -44,7 +48,10 @@ const NavItem = ({ icon, label, href, active = false }: NavItemProps) => {
 const Sidebar = ({ className = "" }: SidebarProps) => {
   // Get current path to determine active link
   const currentPath = window.location.pathname;
-  const { supabase } = useAuth();
+  const { user, permissions } = useAuth();
+
+  // Check if user has permission to manage sessions
+  const canManageSessions = permissions?.canManageTrainingSessions || false;
 
   return (
     <aside
@@ -108,10 +115,11 @@ const Sidebar = ({ className = "" }: SidebarProps) => {
               active={currentPath === "/training"}
             />
             <NavItem
-              icon={<Video />}
+              icon={<Calendar />}
               label="Session Management"
               href="/session-management"
               active={currentPath === "/session-management"}
+              hidden={!canManageSessions}
             />
             <NavItem
               icon={<Download />}
@@ -146,7 +154,7 @@ const Sidebar = ({ className = "" }: SidebarProps) => {
       <div className="p-4 border-t border-gray-800">
         <button
           onClick={() => {
-            supabase.auth.signOut();
+            user.signOut();
             window.location.href = "/login";
           }}
           className="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-gray-300 hover:bg-cvup-lightblue hover:text-cvup-gold transition-colors"
