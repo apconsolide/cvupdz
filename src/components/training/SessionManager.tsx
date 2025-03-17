@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
+
 import { useTraining } from "@/hooks/useTraining";
 import { useAuth } from "@/context/AuthContext";
 import { TrainingSession, SessionParticipant } from "@/lib/api/training";
