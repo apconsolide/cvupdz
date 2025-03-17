@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Bell, ChevronDown, Search, User } from "lucide-react";
+import { Bell, ChevronDown, Search, User, Video } from "lucide-react";
 
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -61,6 +61,12 @@ const Navbar = ({
           >
             Training
           </Link>
+          <Link
+            to="/session-management"
+            className="text-white hover:text-cvup-gold transition-colors"
+          >
+            Sessions
+          </Link>
         </div>
       </div>
 
@@ -110,6 +116,10 @@ const Navbar = ({
             <DropdownMenuItem className="hover:bg-cvup-lightblue hover:text-cvup-gold cursor-pointer">
               <User className="mr-2 h-4 w-4" />
               <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="hover:bg-cvup-lightblue hover:text-cvup-gold cursor-pointer">
+              <Video className="mr-2 h-4 w-4" />
+              <span>My Sessions</span>
             </DropdownMenuItem>
             <DropdownMenuItem className="hover:bg-cvup-lightblue hover:text-cvup-gold cursor-pointer">
               Settings
