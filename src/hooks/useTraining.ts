@@ -1,12 +1,13 @@
-import { useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
+
 import {
   TrainingSession,
   SessionParticipant,
-  getSessionsByStatus,
-  getSessionDetails,
+  getTrainingSessions as getSessionsByStatus,
+  getTrainingSession as getSessionDetails,
   updateTrainingSession,
   registerForSession,
-  cancelSessionRegistration,
+  cancelRegistration as cancelSessionRegistration,
 } from "@/lib/api/training";
 
 export function useTraining() {

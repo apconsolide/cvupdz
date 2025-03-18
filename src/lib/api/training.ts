@@ -40,13 +40,12 @@ export type SessionRecording = {
   views: number;
   downloadUrl: string;
 };
-
 export const getTrainingSessions = async (
   status?: string,
 ): Promise<TrainingSession[]> => {
   let query = supabase
     .from("training_sessions")
-    .select("*, instructors(name)")
+    .select("*") // Remove the join with instructors for now
     .order("date", { ascending: true });
 
   if (status) {
@@ -65,7 +64,7 @@ export const getTrainingSessions = async (
     startTime: session.start_time,
     endTime: session.end_time,
     instructorId: session.instructor_id,
-    instructorName: session.instructors?.name || "Unknown",
+    instructorName: "Unknown", // Set a default value instead of accessing the relation
     type: session.type,
     capacity: session.capacity,
     enrolled: session.enrolled,
@@ -73,13 +72,12 @@ export const getTrainingSessions = async (
     meetLink: session.meet_link,
   }));
 };
-
 export const getTrainingSession = async (
   sessionId: string,
 ): Promise<TrainingSession | null> => {
   const { data, error } = await supabase
     .from("training_sessions")
-    .select("*, instructors(name)")
+    .select("*") // Remove the join with instructors
     .eq("id", sessionId)
     .single();
 
@@ -94,7 +92,7 @@ export const getTrainingSession = async (
     startTime: data.start_time,
     endTime: data.end_time,
     instructorId: data.instructor_id,
-    instructorName: data.instructors?.name || "Unknown",
+    instructorName: "Unknown", // Set a default value instead of accessing the relation
     type: data.type,
     capacity: data.capacity,
     enrolled: data.enrolled,
