@@ -1,16 +1,59 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Video, Users, Clock, Check } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { Download, Video, Users, Clock, Check, Loader2 } from "lucide-react";
+import { useTraining } from "@/hooks/useTraining";
+import { downloadExtension } from "@/lib/api/extension";
 
 interface ChromeExtensionInfoProps {
   className?: string;
 }
 
 const ChromeExtensionInfo = ({ className }: ChromeExtensionInfoProps) => {
+  const { toast } = useToast();
+  const { registerExtension, loading } = useTraining();
+  const [isInstalling, setIsInstalling] = useState(false);
+
+  const handleInstallExtension = async () => {
+    setIsInstalling(true);
+    try {
+      // Register the extension in the database
+      const extensionId = "cvup-zoom-assistant-extension";
+      const version = "1.0.2";
+      const settings = {
+        autoRecord: true,
+        trackAttendance: true,
+        uploadRecordings: true,
+        notifyParticipants: false,
+      };
+
+      await registerExtension(extensionId, version, settings);
+
+      // Download the extension files as a zip
+      downloadExtension();
+
+      toast({
+        title: "Extension Downloaded",
+        description:
+          "CV UP Zoom Assistant files have been downloaded. Please unzip and load in Chrome.",
+      });
+    } catch (error) {
+      console.error("Error downloading extension:", error);
+      toast({
+        title: "Download Failed",
+        description:
+          "Failed to download the Chrome extension files. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsInstalling(false);
+    }
+  };
+
   return (
     <Card
-      className={`w-full bg-cvup-lightblue text-white border-none shadow-lg ${className}`}
+      className={`w-full bg-cvup-blue text-white border-none shadow-lg ${className}`}
     >
       <CardHeader className="pb-2">
         <CardTitle className="text-xl font-bold flex items-center gap-2">
@@ -89,9 +132,22 @@ const ChromeExtensionInfo = ({ className }: ChromeExtensionInfoProps) => {
                 </div>
               </div>
 
-              <Button className="w-full sm:w-auto mt-2 bg-cvup-gold hover:bg-cvup-gold/90 text-cvup-blue font-medium">
-                <Download className="mr-2 h-4 w-4" />
-                Install Chrome Extension
+              <Button
+                className="w-full sm:w-auto mt-2 bg-cvup-gold hover:bg-cvup-gold/90 text-cvup-blue font-medium"
+                onClick={handleInstallExtension}
+                disabled={isInstalling || loading}
+              >
+                {isInstalling ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Installing...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Install Chrome Extension
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -159,7 +215,7 @@ const ChromeExtensionInfo = ({ className }: ChromeExtensionInfoProps) => {
             </div>
           </div>
 
-          <div className="bg-cvup-blue p-4 rounded-lg flex items-center gap-3">
+          <div className="bg-cvup-lightblue p-4 rounded-lg flex items-center gap-3">
             <div className="p-2 rounded-full bg-green-500/20">
               <Check className="h-5 w-5 text-green-500" />
             </div>

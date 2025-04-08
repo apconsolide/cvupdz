@@ -14,6 +14,7 @@ export type TrainingSession = {
   enrolled: number;
   status: "scheduled" | "in-progress" | "completed" | "cancelled";
   meetLink: string | null;
+  zoomMeetingId?: string | null;
 };
 
 export type SessionParticipant = {
@@ -45,14 +46,22 @@ export const getTrainingSessions = async (
 ): Promise<TrainingSession[]> => {
   let query = supabase
     .from("training_sessions")
-    .select("*") // Remove the join with instructors for now
+    .select("*")
     .order("date", { ascending: true });
 
   if (status) {
+    console.log("Filtering by status:", status);
     query = query.eq("status", status);
   }
 
   const { data, error } = await query;
+
+  if (error) {
+    console.error("Supabase query error:", error);
+    throw error;
+  }
+
+  console.log("Raw session data from DB:", data);
 
   if (error) throw error;
 
@@ -70,40 +79,60 @@ export const getTrainingSessions = async (
     enrolled: session.enrolled,
     status: session.status,
     meetLink: session.meet_link,
+    zoomMeetingId: session.zoom_meeting_id,
   }));
 };
 export const getTrainingSession = async (
   sessionId: string,
-): Promise<TrainingSession | null> => {
-  const { data, error } = await supabase
-    .from("training_sessions")
-    .select("*") // Remove the join with instructors
-    .eq("id", sessionId)
-    .single();
+): Promise<
+  (TrainingSession & { participants?: SessionParticipant[] }) | null
+> => {
+  try {
+    const { data, error } = await supabase
+      .from("training_sessions")
+      .select("*") // Remove the join with instructors
+      .eq("id", sessionId)
+      .single();
 
-  if (error) throw error;
-  if (!data) return null;
+    if (error) {
+      console.error("Error fetching training session:", error);
+      return null;
+    }
+    if (!data) return null;
 
-  return {
-    id: data.id,
-    title: data.title,
-    description: data.description,
-    date: data.date,
-    startTime: data.start_time,
-    endTime: data.end_time,
-    instructorId: data.instructor_id,
-    instructorName: "Unknown", // Set a default value instead of accessing the relation
-    type: data.type,
-    capacity: data.capacity,
-    enrolled: data.enrolled,
-    status: data.status,
-    meetLink: data.meet_link,
-  };
+    // Get participants for this session
+    const participants = await getSessionParticipants(sessionId);
+
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      date: data.date,
+      startTime: data.start_time,
+      endTime: data.end_time,
+      instructorId: data.created_by || "Unknown", // Use created_by as instructorId
+      instructorName: "Unknown", // Set a default value instead of accessing the relation
+      type: data.type || "webinar",
+      capacity: data.capacity || 20,
+      enrolled: data.enrolled || 0,
+      status: data.status || "scheduled",
+      meetLink: data.meet_link,
+      zoomMeetingId: data.zoom_meeting_id,
+      participants: participants, // Add participants to the session object
+    };
+  } catch (error) {
+    console.error("Unexpected error in getTrainingSession:", error);
+    return null;
+  }
 };
-
 export const createTrainingSession = async (
   sessionData: Omit<TrainingSession, "id" | "enrolled" | "instructorName">,
+  zoomMeetingId?: string,
 ): Promise<string> => {
+  // Format the timestamps correctly
+  const startTimestamp = `${sessionData.date}T${sessionData.startTime}:00`;
+  const endTimestamp = `${sessionData.date}T${sessionData.endTime}:00`;
+
   const { data, error } = await supabase
     .from("training_sessions")
     .insert([
@@ -111,14 +140,12 @@ export const createTrainingSession = async (
         title: sessionData.title,
         description: sessionData.description,
         date: sessionData.date,
-        start_time: sessionData.startTime,
-        end_time: sessionData.endTime,
-        instructor_id: sessionData.instructorId,
-        type: sessionData.type,
+        start_time: startTimestamp, // Use the formatted timestamp
+        end_time: endTimestamp, // Use the formatted timestamp
+        created_by: sessionData.created_by,
         capacity: sessionData.capacity,
-        enrolled: 0,
-        status: sessionData.status,
         meet_link: sessionData.meetLink,
+        zoom_meeting_id: zoomMeetingId,
       },
     ])
     .select();
@@ -169,73 +196,137 @@ export const deleteTrainingSession = async (
 export const getSessionParticipants = async (
   sessionId: string,
 ): Promise<SessionParticipant[]> => {
-  const { data, error } = await supabase
-    .from("session_participants")
-    .select("*, profiles(full_name, email)")
-    .eq("session_id", sessionId);
+  try {
+    // First, get the session participants without the join
+    const { data, error } = await supabase
+      .from("session_participants")
+      .select("*")
+      .eq("session_id", sessionId);
 
-  if (error) throw error;
+    if (error) {
+      console.error("Error fetching session participants:", error);
+      return [];
+    }
 
-  return data.map((participant) => ({
-    id: participant.id,
-    sessionId: participant.session_id,
-    userId: participant.user_id,
-    userName: participant.profiles?.full_name || "Unknown",
-    userEmail: participant.profiles?.email || "Unknown",
-    attendancePercentage: participant.attendance_percentage,
-    joinTime: participant.join_time,
-    leaveTime: participant.leave_time,
-    status: participant.status,
-    notified: participant.notified,
-  }));
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    // For each participant, get the user profile separately if needed
+    const participantsWithProfiles = await Promise.all(
+      data.map(async (participant) => {
+        let userName = "Unknown";
+        let userEmail = "Unknown";
+
+        if (participant.user_id) {
+          try {
+            // Get user profile data - note that we're only selecting full_name as email doesn't exist
+            const { data: profileData, error: profileError } = await supabase
+              .from("profiles")
+              .select("full_name")
+              .eq("id", participant.user_id)
+              .single();
+
+            if (!profileError && profileData) {
+              userName = profileData.full_name || "Unknown";
+              // Since email doesn't exist in profiles table, we'll use a placeholder
+              // In a real app, you might want to get this from auth.users or another table
+              userEmail = `user-${participant.user_id}@example.com`;
+            }
+          } catch (profileErr) {
+            console.error("Error fetching user profile:", profileErr);
+          }
+        }
+
+        return {
+          id: participant.id,
+          sessionId: participant.session_id,
+          userId: participant.user_id,
+          userName,
+          userEmail,
+          attendancePercentage: participant.attendance_percentage,
+          joinTime: participant.join_time,
+          leaveTime: participant.leave_time,
+          status: participant.status,
+          notified: participant.notified,
+        };
+      }),
+    );
+
+    return participantsWithProfiles;
+  } catch (error) {
+    console.error("Unexpected error in getSessionParticipants:", error);
+    return [];
+  }
 };
 
 export const registerForSession = async (
   sessionId: string,
-  userId: string,
+  userId?: string,
 ): Promise<void> => {
-  // First, check if already registered
-  const { data: existingRegistration } = await supabase
-    .from("session_participants")
-    .select("id")
-    .eq("session_id", sessionId)
-    .eq("user_id", userId)
-    .single();
-
-  if (existingRegistration) {
-    // Already registered
-    return;
+  // Check if userId is provided
+  if (!userId) {
+    console.error("User ID is undefined, cannot register for session");
+    throw new Error("User ID is required to register for a session");
   }
 
-  // Get session to check capacity
-  const session = await getTrainingSession(sessionId);
-  if (!session) throw new Error("Session not found");
+  try {
+    // First, check if already registered
+    const { data: existingRegistration, error: checkError } = await supabase
+      .from("session_participants")
+      .select("id")
+      .eq("session_id", sessionId)
+      .eq("user_id", userId);
 
-  if (session.enrolled >= session.capacity) {
-    throw new Error("Session is at full capacity");
+    if (checkError) {
+      console.error("Error checking existing registration:", checkError);
+      throw checkError;
+    }
+
+    if (existingRegistration && existingRegistration.length > 0) {
+      // Already registered
+      return;
+    }
+
+    // Get session to check capacity
+    const session = await getTrainingSession(sessionId);
+    if (!session) throw new Error("Session not found");
+
+    if (session.enrolled >= session.capacity) {
+      throw new Error("Session is at full capacity");
+    }
+
+    // Start a transaction to register and update enrolled count
+    const { error: registrationError } = await supabase
+      .from("session_participants")
+      .insert([
+        {
+          session_id: sessionId,
+          user_id: userId,
+          status: "registered",
+          notified: false,
+        },
+      ]);
+
+    if (registrationError) {
+      console.error("Error registering for session:", registrationError);
+      throw registrationError;
+    }
+
+    // Update enrolled count
+    const { error: updateError } = await supabase
+      .from("training_sessions")
+      .update({ enrolled: session.enrolled + 1 })
+      .eq("id", sessionId);
+
+    if (updateError) {
+      console.error("Error updating enrolled count:", updateError);
+      throw updateError;
+    }
+  } catch (error) {
+    console.error("Error in registerForSession:", error);
+    throw error;
   }
-
-  // Start a transaction to register and update enrolled count
-  const { error: registrationError } = await supabase
-    .from("session_participants")
-    .insert([
-      {
-        session_id: sessionId,
-        user_id: userId,
-        status: "registered",
-        notified: false,
-      },
-    ]);
-
-  if (registrationError) throw registrationError;
-
-  // Update enrolled count
-  const { error: updateError } = await supabase
-    .from("training_sessions")
-    .update({ enrolled: session.enrolled + 1 })
-    .eq("id", sessionId);
-
-  if (updateError) throw updateError;
 };
 
 export const cancelRegistration = async (

@@ -114,7 +114,7 @@ function App() {
 
             {import.meta.env.VITE_TEMPO && <Route path="/tempobook/*" />}
           </Routes>
-          {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
+          {import.meta.env.VITE_TEMPO && useRoutes(routes)}
         </>
       </Suspense>
     </AuthProvider>

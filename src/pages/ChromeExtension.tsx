@@ -5,8 +5,25 @@ import ChromeExtensionInfo from "@/components/training/ChromeExtensionInfo";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, Settings, HelpCircle } from "lucide-react";
+import { useTraining } from "@/hooks/useTraining";
 
 const ChromeExtension = () => {
+  const { registerExtension } = useTraining();
+
+  const handleInstallExtension = async () => {
+    try {
+      const extensionId = "cvup-zoom-assistant-extension";
+      const version = "1.0.2";
+      await registerExtension(extensionId, version);
+
+      // Download the extension files
+      const { downloadExtension } = await import("@/lib/api/extension");
+      downloadExtension();
+    } catch (error) {
+      console.error("Error downloading extension:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-cvup-blue text-white">
       <Navbar />
@@ -21,7 +38,10 @@ const ChromeExtension = () => {
                   Enhance your training sessions with our Chrome extension
                 </p>
               </div>
-              <Button className="bg-cvup-gold hover:bg-cvup-gold/90 text-cvup-blue font-medium">
+              <Button
+                className="bg-cvup-gold hover:bg-cvup-gold/90 text-cvup-blue font-medium"
+                onClick={handleInstallExtension}
+              >
                 <Download className="mr-2 h-4 w-4" />
                 Install Extension
               </Button>

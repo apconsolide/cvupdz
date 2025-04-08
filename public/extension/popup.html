@@ -1,0 +1,51 @@
+<!-- Path: public/extension/popup.html -->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img src="icons/icon48.png" alt="CV UP Logo" class="logo" />
+        <h1>CV UP Zoom Assistant</h1>
+      </div>
+
+      <div class="status-container">
+        <div class="status">
+          <span class="status-label">Status:</span>
+          <span class="status-value" id="status">Not connected</span>
+        </div>
+        <button id="connect-btn" class="primary-btn">Connect</button>
+      </div>
+
+      <div class="settings">
+        <h2>Settings</h2>
+        <div class="setting-item">
+          <label for="auto-record">
+            <input type="checkbox" id="auto-record" checked />
+            Auto-record sessions
+          </label>
+        </div>
+        <div class="setting-item">
+          <label for="track-attendance">
+            <input type="checkbox" id="track-attendance" checked />
+            Track attendance
+          </label>
+        </div>
+        <div class="setting-item">
+          <label for="upload-recordings">
+            <input type="checkbox" id="upload-recordings" checked />
+            Upload recordings
+          </label>
+        </div>
+      </div>
+
+      <div class="footer">
+        <button id="save-btn" class="primary-btn">Save Settings</button>
+      </div>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>
