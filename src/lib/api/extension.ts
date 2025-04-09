@@ -5,6 +5,7 @@ export function downloadExtension() {
     const link = document.createElement("a");
 
     // Set the download attribute and href
+    // This will download the extension.zip file from the public folder
     link.download = "cvup-zoom-assistant.zip";
     link.href = "/extension.zip";
 
@@ -20,6 +21,6 @@ export function downloadExtension() {
     return true;
   } catch (error) {
     console.error("Error downloading extension:", error);
-    throw error;
+    return false;
   }
 }

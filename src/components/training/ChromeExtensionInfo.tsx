@@ -28,18 +28,23 @@ const ChromeExtensionInfo = ({ className }: ChromeExtensionInfoProps) => {
         notifyParticipants: false,
       };
 
+      // Register the extension first
       await registerExtension(extensionId, version, settings);
 
-      // Download the extension files as a zip
-      downloadExtension();
+      // Then download the extension files
+      const success = downloadExtension();
 
-      toast({
-        title: "Extension Downloaded",
-        description:
-          "CV UP Zoom Assistant files have been downloaded. Please unzip and load in Chrome.",
-      });
+      if (success) {
+        toast({
+          title: "Extension Downloaded",
+          description:
+            "CV UP Zoom Assistant files have been downloaded. Please follow the installation instructions below.",
+        });
+      } else {
+        throw new Error("Failed to download extension files");
+      }
     } catch (error) {
-      console.error("Error downloading extension:", error);
+      console.error("Error installing extension:", error);
       toast({
         title: "Download Failed",
         description:
@@ -174,7 +179,7 @@ const ChromeExtensionInfo = ({ className }: ChromeExtensionInfoProps) => {
                 </div>
                 <div>
                   <p className="text-white">
-                    In the Chrome Web Store, click "Add to Chrome"
+                    Unzip the downloaded file to a folder on your computer
                   </p>
                 </div>
               </div>
@@ -185,7 +190,7 @@ const ChromeExtensionInfo = ({ className }: ChromeExtensionInfoProps) => {
                 </div>
                 <div>
                   <p className="text-white">
-                    Grant the necessary permissions when prompted
+                    Open Chrome and go to chrome://extensions/
                   </p>
                 </div>
               </div>
@@ -196,7 +201,7 @@ const ChromeExtensionInfo = ({ className }: ChromeExtensionInfoProps) => {
                 </div>
                 <div>
                   <p className="text-white">
-                    Sign in with your CV UP account in the extension
+                    Enable "Developer mode" in the top-right corner
                   </p>
                 </div>
               </div>
@@ -207,8 +212,7 @@ const ChromeExtensionInfo = ({ className }: ChromeExtensionInfoProps) => {
                 </div>
                 <div>
                   <p className="text-white">
-                    You're all set! The extension will automatically work with
-                    your Google Meet sessions
+                    Click "Load unpacked" and select the unzipped folder
                   </p>
                 </div>
               </div>

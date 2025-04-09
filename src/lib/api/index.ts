@@ -8,3 +8,4 @@ export * from "./training";
 export * from "./courses";
 export * from "./admin";
 export * from "./zoom";
+export * from "./extension";

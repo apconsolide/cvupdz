@@ -1,26 +1,51 @@
-import React from "react";
+import React, { useState } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Sidebar from "@/components/layout/Sidebar";
 import ChromeExtensionInfo from "@/components/training/ChromeExtensionInfo";
+import AttendanceReport from "@/components/training/AttendanceReport";
+import RecordingsList from "@/components/training/RecordingsList";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, Settings, HelpCircle } from "lucide-react";
 import { useTraining } from "@/hooks/useTraining";
+import { useToast } from "@/components/ui/use-toast";
+import { downloadExtension } from "@/lib/api/extension";
 
 const ChromeExtension = () => {
   const { registerExtension } = useTraining();
+  const { toast } = useToast();
+  const [isInstalling, setIsInstalling] = useState(false);
 
   const handleInstallExtension = async () => {
+    setIsInstalling(true);
     try {
+      // Register the extension
       const extensionId = "cvup-zoom-assistant-extension";
       const version = "1.0.2";
       await registerExtension(extensionId, version);
 
       // Download the extension files
-      const { downloadExtension } = await import("@/lib/api/extension");
-      downloadExtension();
+      const success = downloadExtension();
+
+      if (success) {
+        toast({
+          title: "Extension Downloaded",
+          description:
+            "CV UP Zoom Assistant files have been downloaded. Please follow the installation instructions below.",
+        });
+      } else {
+        throw new Error("Failed to download extension files");
+      }
     } catch (error) {
       console.error("Error downloading extension:", error);
+      toast({
+        title: "Download Failed",
+        description:
+          "Failed to download the Chrome extension files. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsInstalling(false);
     }
   };
 
@@ -41,9 +66,16 @@ const ChromeExtension = () => {
               <Button
                 className="bg-cvup-gold hover:bg-cvup-gold/90 text-cvup-blue font-medium"
                 onClick={handleInstallExtension}
+                disabled={isInstalling}
               >
-                <Download className="mr-2 h-4 w-4" />
-                Install Extension
+                {isInstalling ? (
+                  "Installing..."
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Install Extension
+                  </>
+                )}
               </Button>
             </div>
 
@@ -72,7 +104,13 @@ const ChromeExtension = () => {
               </TabsList>
 
               <TabsContent value="overview" className="mt-6">
-                <ChromeExtensionInfo />
+                <div className="space-y-8">
+                  <ChromeExtensionInfo />
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <AttendanceReport />
+                    <RecordingsList />
+                  </div>
+                </div>
               </TabsContent>
 
               <TabsContent value="settings" className="mt-6">
@@ -235,9 +273,10 @@ const ChromeExtension = () => {
                           </h4>
                           <p className="text-sm text-gray-300">
                             Click the "Install Extension" button at the top of
-                            this page. This will take you to the Chrome Web
-                            Store where you can add the extension to your
-                            browser.
+                            this page. This will download a zip file. Unzip it,
+                            then go to chrome://extensions/, enable Developer
+                            mode, and click "Load unpacked" to select the
+                            unzipped folder.
                           </p>
                         </div>
 

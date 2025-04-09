@@ -30,6 +30,3 @@ core
 
 .github/
 
-# Tempo files
-**/tempobook/dynamic/
-**/tempobook/storyboards/
